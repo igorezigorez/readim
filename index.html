@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta content="/images/google_favicon_128.png" itemprop="image" />
+    <title>Reader</title>
+
+
+    <link rel="stylesheet" type="text/css" href="ViewerStyle.css" />
+</head>
+
+<body>
+    <div class="content" id="content">
+        <div class="word">
+
+            <span class="left">
+                <span class="prev" data-bind="text:previousWord"></span>
+                <span class="cur" data-bind="text:currentWord.value"></span>
+                <span class="next" data-bind="text:nextWord"></span>
+            </span>
+
+            <span class="right">
+                <span class="prev" data-bind="text:previousWord"></span>
+                <span class="cur" data-bind="text:currentWord.value"></span>
+                <span class="next" data-bind="text:nextWord"></span>
+            </span>
+
+        </div>
+        <div class="overview">
+
+            <span class="left" data-bind="foreach: {data: visibleLines}">
+                <div data-bind="html: line, css: { prevLine: $index() == $parent.currentWordLine() - 1, curLine: $index() == $parent.currentWordLine(), nextLine: $index() == $parent.currentWordLine() + 1}"></div>
+            </span>
+
+            <span class="right" data-bind="foreach: {data: visibleLines}">
+                <div data-bind="html: line, css: { prevLine: $index() == $parent.currentWordLine() - 1, curLine: $index() == $parent.currentWordLine(), nextLine: $index() == $parent.currentWordLine() + 1}"></div>
+            </span>
+
+        </div>
+    </div>
+
+    <script type='text/javascript' src='knockout-3.1.0.js'></script>
+    <script type='text/javascript' src="ViewerModel.js"></script>
+
+</body>
+
+</html>

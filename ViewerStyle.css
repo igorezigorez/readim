@@ -1,0 +1,63 @@
+﻿
+body  {
+	background-color:#111111;
+	color: #bbbbbb;
+}
+.word{
+	width:100%;
+}
+
+.word .prev, .word .next {
+	color: #444444;
+}
+
+.word .cur{
+	text-align:center;
+}
+
+.word .prev{
+	text-align:right;
+}
+.word .next{
+	text-align:left;
+	
+}
+
+.word>span>span{
+	width:30%;
+	display:inline-block; 
+}
+
+.overview{
+	width:100%;
+	color: #666677;
+}
+span.left, span.right{
+	width:49%;
+	display:inline-block; 
+}
+
+.word{
+	font:20px arial;
+	margin: 20px 0px;
+}
+.overview{
+	font:12px arial;
+}
+
+.overview span span{
+	color: #ff7777;
+}
+
+.prevLine{
+	background-color:#171717;
+	color: #777787;
+}
+.curLine{
+	background-color:#202020;	
+	color: #998888;
+}
+.nextLine{
+	background-color:#171717;
+	color: #777787;
+}
