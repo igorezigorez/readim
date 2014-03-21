@@ -12,11 +12,13 @@ body  {
 }
 
 .word .cur{
-	text-align:center;
+	/*text-align:center;*/
+	width:50%;
 }
 
 .word .prev{
 	text-align:right;
+	width:25%;
 }
 .word .next{
 	text-align:left;
@@ -24,7 +26,7 @@ body  {
 }
 
 .word>span>span{
-	width:30%;
+	
 	display:inline-block; 
 }
 
@@ -64,17 +66,40 @@ span.left, span.right{
 
 .word_frame{
 	width:100%;
-	border-top:2px solid #DDDDDD;
+	border-top:1px solid #aaaaaa;
+	border-bottom:1px solid #aaaaaa;
 	background-color:#171717;
 }
 .word_frame .cursor{
 	display:block;
-	height:5px;
+	height:6px;
 	width:50%;
 	border-right: 2px solid #DDDDDD;
 }
 
 .word_frame .word_container
 {
-	margin:5px;
+	margin:7px 0;
+}
+
+.word_frame .word_container span
+{
+	margin: 0px;
+	padding: 0px;
+}
+
+.middle_letter
+{
+	color: #ff9999;
+}
+
+.left_part
+{
+	width:48%;
+	display:inline-block; 
+	text-align:right;
+}
+.right_part
+{
+	width:51%;
 }

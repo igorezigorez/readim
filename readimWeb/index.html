@@ -12,13 +12,15 @@
 
             <span class="left">
                 <span class="prev" data-bind="text:previousWord"></span>
-                <span class="cur">
+                <span class="cur" data-bind="click: startStop">
 
                     <div class="word_frame">
                         <div class="cursor"></div>
 
                         <div class="word_container">
-                            <span data-bind="text: currentWord.value"></span>
+                            <span class="left_part"><span data-bind="html: currentWord.leftPart"></span>
+                            </span><span class="right_part"><span class="middle_letter" data-bind="text: currentWord.middleLetter">A</span><span data-bind="    text: currentWord.rightPart"></span>
+                            </span>
                         </div>
 
                         <div class="cursor"></div>
@@ -30,13 +32,16 @@
             <span class="right">
                 <span class="prev" data-bind="text:previousWord"></span>
 
-                <span class="cur">
+                <span class="cur" data-bind="click: startStop">
 
                     <div class="word_frame">
                         <div class="cursor"></div>
 
                         <div class="word_container">
-                            <span data-bind="text: currentWord.value"></span>
+
+                            <span class="left_part"><span data-bind="html: currentWord.leftPart"></span>
+                            </span><span class="right_part"><span class="middle_letter" data-bind="text: currentWord.middleLetter">A</span><span data-bind="text: currentWord.rightPart"></span>
+                            </span>
                         </div>
 
                         <div class="cursor"></div>
@@ -47,14 +52,25 @@
             </span>
 
         </div>
+
         <div class="overview">
 
             <span class="left" data-bind="foreach: {data: visibleLines}">
-                <div data-bind="html: line, css: { prevLine: $index() == $parent.currentWordLine() - 1, curLine: $index() == $parent.currentWordLine(), nextLine: $index() == $parent.currentWordLine() + 1}"></div>
+                <div data-bind="html: line, css: {
+                        prevLine: $index() == $parent.settings.preview.wordLineNumber() - 1,
+                        curLine: $index() == $parent.settings.preview.wordLineNumber(),
+                        nextLine: $index() == $parent.settings.preview.wordLineNumber() + 1
+                    }">
+                </div>
             </span>
 
             <span class="right" data-bind="foreach: {data: visibleLines}">
-                <div data-bind="html: line, css: { prevLine: $index() == $parent.currentWordLine() - 1, curLine: $index() == $parent.currentWordLine(), nextLine: $index() == $parent.currentWordLine() + 1}"></div>
+                <div data-bind="html: line, css: {
+                        prevLine: $index() == $parent.settings.preview.wordLineNumber() - 1,
+                        curLine: $index() == $parent.settings.preview.wordLineNumber(),
+                        nextLine: $index() == $parent.settings.preview.wordLineNumber() + 1
+                    }">
+                </div>
             </span>
 
         </div>

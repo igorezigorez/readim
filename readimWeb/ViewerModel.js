@@ -8,47 +8,92 @@
     }
 
     var ViewerModel = {
-        previewLineLength: 40,
-        interval: 300,
+        settings: {
+            parser: {
+                prepositionMaxLength: 2,
+                wordAfterPrepositionMaxLength: 10,
+                previewLineLength: 70,
+            },
+            preview: {
+                linesCount: 20,
+                wordLineNumber: ko.observable(6)
+            },
+            timer: {
+                interval: 150,
+                spaceCorrection: 1.18,
+                wordLengthCorrection: 0.01,
+                bigWordLengthCorrection: 1.7,
+                punctuationCorrection: 1.18,
+                bigWordLength: 9,
+                startCorrection: 2.4,
+                startCorrectionStep: 0.3
+            }
+        },
+
         textArray: [],
         visibleLines: ko.observableArray([]),
-
         nextTextLine: 0,
-        currentWordLine: ko.observable(0),
 
         currentWord: {
             lineNumber: 0,
             position: 0,
-            value: ko.observable('bbbb')
+            value: ko.observable('bbbb'), //todo: remove knockout bind
+            leftPart: ko.observable('oooo'),
+            middleLetter: ko.observable('V'),
+            rightPart: ko.observable('oooo'),
         },
+
         previousWord: ko.observable('bbbb'),
         nextWord: ko.observable('bbbb'),
+        started: false,
+        startCorrection: 1,
 
+        moveNextByTimer: function () {
+            if (this.started) {
+                var timeoutCorrection = this.moveNext();
+                var self = this;
+                if (this.startCorrection > 1 + this.settings.timer.startCorrectionStep) {
+                    this.startCorrection -= this.settings.timer.startCorrectionStep;
+                    timeoutCorrection *= this.startCorrection;
+                }
 
-        loadText: function (content, previewLineLength) {
-            this.textArray = splitTextToWords(content, previewLineLength);
+                setTimeout(function() { self.moveNextByTimer(); }, self.settings.timer.interval * timeoutCorrection);
+            }
+        },
+
+        startStop: function() {
+            this.started = ! this.started;
+            if (this.started) {
+                this.startCorrection = this.settings.timer.startCorrection;
+                this.moveNextByTimer();
+            }
+        },
+
+        loadText: function (content) {
+            this.textArray = splitTextToWords(content, this.settings.parser);
         },
         startReading: function () {
-            this.loadText(getFileContent(), this.previewLineLength);
+            this.loadText(getFileContent());
 
-            var previewLinesCount = 20;
-            this.currentWordLine(6);
-            this.nextTextLine = 21;
+            this.settings.preview.wordLineNumber(6);
+            this.nextTextLine = this.settings.preview.linesCount + 1;
 
-            for (var i = 0; i < previewLinesCount; i++) {
+            for (var i = 0; i < this.settings.preview.linesCount; i++) {
                 this.visibleLines.push({
                     line: ko.observable(this.textArray[i].join(" ")),
                     words: this.textArray[i]
                 });
             }
 
-            this.currentWord.lineNumber = this.currentWordLine();
+            this.currentWord.lineNumber = this.settings.preview.wordLineNumber();
             this.currentWord.position = 1;
-            this.currentWord.value(this.textArray[this.currentWordLine()][1]);
+            //this.currentWord.value(this.textArray[this.settings.preview.wordLineNumber()][1]);
 
             this.backupWordInObject(this.currentWord);
             this.decorateWord(this.currentWord);
         },
+
+
 
         moveNext: function () {
             var word = this.currentWord;
@@ -70,18 +115,16 @@
         },
 
         getIntervalCorrection: function (word) {
-            var correction = 1 + word.length / 100;
+            var correction = 1 + (word.length * this.settings.timer.wordLengthCorrection);
             if (word.indexOf(" ") > 0) {
-                correction *= 1.18;
+                correction *= this.settings.timer.spaceCorrection;
             }
-            if (word.length > 11) {
-                correction *= 1.5;
+            if (word.length > this.settings.timer.bigWordLength) {
+                correction *= this.settings.timer.bigWordLengthCorrection;
             }
             if (containsPunctuation(word) && containsPunctuation(word).length) {
-                correction *= 1.18;
+                correction *= this.settings.timer.punctuationCorrection;
             }
-
-            //console.log("word: " + word + ", correction: " + correction);
             return correction;
         },
 
@@ -109,6 +152,14 @@
         },
         backupWordInObject: function (wordObject) {
             wordObject.value(this.visibleLines()[wordObject.lineNumber].words[wordObject.position]);
+            this.splitWord(wordObject);
+        },
+        splitWord: function (wordObject) {
+            var word = wordObject.value();
+            var index = (word.indexOf(" ") > 0) ? Math.floor((word.length - word.indexOf(" ")) / 3) + word.indexOf(" ") : Math.floor(word.length / 3);
+            wordObject.leftPart(word.substr(0, index).replace(" ","&nbsp;"));
+            wordObject.middleLetter(word[index]);
+            wordObject.rightPart(word.substr(index + 1));
         },
         restoreWordFromObject: function (wordObject) {
             var result = this.visibleLines()[wordObject.lineNumber];
@@ -118,18 +169,13 @@
 
     };
 
-
-
-    function splitTextToWords(text, previewLineLength) {
-        var prepositionMaxLength = 2,
-            wordAfterPrepositionMaxLength = 10;
-
+    function splitTextToWords(text, settings) {
         var wordsArray = [],
-            wordsArrayCurrentLineLength = 0,
+            wordsArrayCurrentLineLength,
             wordsArrayCurrentLine,
             linesArray = splitByLineBreaks(text),
             previousWord = "longword",
-            currentWord = "longword";
+            currentWord;
 
         for (var i = 0; i < linesArray.length; i++) {
             var lineWords = linesArray[i].split(" ");
@@ -137,14 +183,14 @@
             wordsArrayCurrentLine = [];
             for (var j = 0; j < lineWords.length; j++) {
                 if (lineWords[j].length > 0) {
-                    if (wordsArrayCurrentLineLength + lineWords[j].length >= previewLineLength) {
+                    if (wordsArrayCurrentLineLength + lineWords[j].length >= settings.previewLineLength) {
                         wordsArray.push(wordsArrayCurrentLine);
                         wordsArrayCurrentLineLength = 0;
                         wordsArrayCurrentLine = [];
                     }
 
                     currentWord = lineWords[j];
-                    if (previousWord.length <= prepositionMaxLength && currentWord.length <= wordAfterPrepositionMaxLength && !containsPunctuation(previousWord)) {
+                    if (previousWord.length <= settings.prepositionMaxLength && currentWord.length <= settings.wordAfterPrepositionMaxLength && !containsPunctuation(previousWord)) {
                         wordsArrayCurrentLine[wordsArrayCurrentLine.length - 1] += " " + currentWord;
                     }
                     else {
@@ -164,13 +210,13 @@
     ViewerModel.startReading();
     //setInterval( function() { ViewerModel.moveNext.call(ViewerModel) } , ViewerModel.interval);
 
-    function startReading() {
-        var timeoutCorrection = ViewerModel.moveNext();
-        //console.log(timeoutCorrection);
-        setTimeout(function () { startReading(); }, ViewerModel.interval * timeoutCorrection);
-    }
-
-    startReading();
+    //function startReading() {
+    //    var timeoutCorrection = ViewerModel.moveNext();
+    //    //console.log(timeoutCorrection);
+    //    setTimeout(function () { startReading(); }, ViewerModel.settings.timer.interval * timeoutCorrection);
+    //}
+    //ViewerModel.moveNextByTimer();
+    //startReading();
 
 
     function getFileContent() {
