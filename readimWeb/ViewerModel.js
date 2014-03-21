@@ -75,7 +75,7 @@
                 correction *= 1.18;
             }
             if (word.length > 11) {
-                correction *= 1.3;
+                correction *= 1.5;
             }
             if (containsPunctuation(word) && containsPunctuation(word).length) {
                 correction *= 1.18;

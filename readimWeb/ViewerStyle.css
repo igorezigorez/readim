@@ -61,3 +61,20 @@ span.left, span.right{
 	background-color:#171717;
 	color: #777787;
 }
+
+.word_frame{
+	width:100%;
+	border-top:2px solid #DDDDDD;
+	background-color:#171717;
+}
+.word_frame .cursor{
+	display:block;
+	height:5px;
+	width:50%;
+	border-right: 2px solid #DDDDDD;
+}
+
+.word_frame .word_container
+{
+	margin:5px;
+}

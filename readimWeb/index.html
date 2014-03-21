@@ -12,13 +12,37 @@
 
             <span class="left">
                 <span class="prev" data-bind="text:previousWord"></span>
-                <span class="cur" data-bind="text:currentWord.value"></span>
+                <span class="cur">
+
+                    <div class="word_frame">
+                        <div class="cursor"></div>
+
+                        <div class="word_container">
+                            <span data-bind="text: currentWord.value"></span>
+                        </div>
+
+                        <div class="cursor"></div>
+                    </div>
+                </span>
                 <span class="next" data-bind="text:nextWord"></span>
             </span>
 
             <span class="right">
                 <span class="prev" data-bind="text:previousWord"></span>
-                <span class="cur" data-bind="text:currentWord.value"></span>
+
+                <span class="cur">
+
+                    <div class="word_frame">
+                        <div class="cursor"></div>
+
+                        <div class="word_container">
+                            <span data-bind="text: currentWord.value"></span>
+                        </div>
+
+                        <div class="cursor"></div>
+                    </div>
+                </span>
+                
                 <span class="next" data-bind="text:nextWord"></span>
             </span>
 
