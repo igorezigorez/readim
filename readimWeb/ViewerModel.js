@@ -32,7 +32,7 @@
 
         textArray: [],
         visibleLines: ko.observableArray([]),
-        nextTextLine: 0,
+        currentTextLine: 0,
 
         currentWord: {
             lineNumber: 0,
@@ -57,26 +57,32 @@
                     timeoutCorrection *= this.startCorrection;
                 }
 
-                setTimeout(function() { self.moveNextByTimer(); }, self.settings.timer.interval * timeoutCorrection);
+                setTimeout(function () { self.moveNextByTimer(); }, self.settings.timer.interval * timeoutCorrection);
             }
         },
 
-        startStop: function() {
-            this.started = ! this.started;
+        startStop: function () {
+            this.started = !this.started;
             if (this.started) {
                 this.startCorrection = this.settings.timer.startCorrection;
                 this.moveNextByTimer();
             }
         },
 
+        lineClick: function (index) {
+            this.startCorrection = this.settings.timer.startCorrection;
+            var word = this.applyWord(this.currentWord, this.scrollLines(index - this.settings.preview.wordLineNumber()));
+        },
+
         loadText: function (content) {
             this.textArray = splitTextToWords(content, this.settings.parser);
         },
+
         startReading: function () {
             this.loadText(getFileContent());
 
             this.settings.preview.wordLineNumber(6);
-            this.nextTextLine = this.settings.preview.linesCount + 1;
+            this.currentTextLine = this.settings.preview.linesCount;
 
             for (var i = 0; i < this.settings.preview.linesCount; i++) {
                 this.visibleLines.push({
@@ -93,14 +99,16 @@
             this.decorateWord(this.currentWord);
         },
 
-
-
         moveNext: function () {
-            var word = this.currentWord;
-            this.restoreWordFromObject(word);
-            this.previousWord(word.value());
+            var word = this.applyWord(this.currentWord, this.getNextWordCoordinates);
+            return this.getIntervalCorrection(word.value());
+        },
 
-            this.getNextWordCoordinates(word);
+        applyWord: function (word, setCoordinatesFunc, previousWordValue) {
+            this.restoreWordFromObject(word);
+            this.previousWord(previousWordValue ? word.value() : previousWordValue);
+
+            setCoordinatesFunc.call(this);
             this.backupWordInObject(word);
             this.decorateWord(word);
 
@@ -110,8 +118,7 @@
             this.nextWord(this.visibleLines()[currentLineNumber].words.length > nextWordPosition
                             ? this.visibleLines()[currentLineNumber].words[nextWordPosition]
                             : this.visibleLines()[currentLineNumber + 1].words[0]);
-
-            return this.getIntervalCorrection(word.value());
+            return word;
         },
 
         getIntervalCorrection: function (word) {
@@ -130,21 +137,38 @@
 
         moveNextLine: function () {
 
-            this.nextTextLine += 1;
+            this.currentTextLine += 1;
             this.visibleLines.shift();
             this.visibleLines.push({
-                line: ko.observable(this.textArray[this.nextTextLine].join(" ")),
-                words: this.textArray[this.nextTextLine]
+                line: ko.observable(this.textArray[this.currentTextLine].join(" ")),
+                words: this.textArray[this.currentTextLine]
             });
         },
 
-        getNextWordCoordinates: function (wordObject) {
+        getNextWordCoordinates: function () {
+            wordObject = this.currentWord;
             if (this.visibleLines()[wordObject.lineNumber].words.length <= wordObject.position + 1) {
                 wordObject.position = -1;
                 this.moveNextLine();
             }
             wordObject.position += 1;
         },
+
+        scrollLines: function (numberOfLines) {
+            return function () {
+                this.currentWord.position = -1;
+                this.currentTextLine += numberOfLines;
+                this.visibleLines = ko.observableArray([]);
+                var firstPreviewLineIndex = this.currentTextLine - this.settings.preview.wordLineNumber();
+                for (var i = firstPreviewLineIndex; i < firstPreviewLineIndex + this.settings.preview.linesCount; i++) {
+                    this.visibleLines.push({
+                        line: ko.observable(this.textArray[i].join(" ")),
+                        words: this.textArray[i]
+                    });
+                }
+            }
+        },
+
         decorateWord: function (wordObject) {
             var result = this.visibleLines()[wordObject.lineNumber];
             result.words[wordObject.position] = "<span>" + result.words[wordObject.position] + "</span>";
@@ -157,7 +181,7 @@
         splitWord: function (wordObject) {
             var word = wordObject.value();
             var index = (word.indexOf(" ") > 0) ? Math.floor((word.length - word.indexOf(" ")) / 3) + word.indexOf(" ") : Math.floor(word.length / 3);
-            wordObject.leftPart(word.substr(0, index).replace(" ","&nbsp;"));
+            wordObject.leftPart(word.substr(0, index).replace(" ", "&nbsp;"));
             wordObject.middleLetter(word[index]);
             wordObject.rightPart(word.substr(index + 1));
         },
@@ -208,16 +232,6 @@
     ko.applyBindings(ViewerModel, document.getElementById('content'));
 
     ViewerModel.startReading();
-    //setInterval( function() { ViewerModel.moveNext.call(ViewerModel) } , ViewerModel.interval);
-
-    //function startReading() {
-    //    var timeoutCorrection = ViewerModel.moveNext();
-    //    //console.log(timeoutCorrection);
-    //    setTimeout(function () { startReading(); }, ViewerModel.settings.timer.interval * timeoutCorrection);
-    //}
-    //ViewerModel.moveNextByTimer();
-    //startReading();
-
 
     function getFileContent() {
         return "Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to an ActiveRecord object graph and then save it to your database. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE sta’s only STARTHERE!!! an, action a JSON a JSON an to do. It is desighned for live of us. It is desighned for live of us. The convention in Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to an ActiveRecord object graph and then save it to your database. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE sta’s only really interesting to Rails developers. The convention in Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to an ActiveRecord object graph and then save it to your database. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE sta’s only really interesting to Rails developers. The convention in Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to an ActiveRecord object graph and then save it to your database. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE sta’s only really interesting to Rails developers. The convention in Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to an ActiveRecord object graph and then save it to your database. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE sta’s only really interesting to Rails developers. The convention in Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to an ActiveRecord object graph and then save it to your database. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE sta’s only really interesting to Rails developers. The convention in Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to anActiveRecord graphandthensaveit to yourtabase. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE sta’s only really interesting to Rails developers. The convention in Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to an ActiveRecord object graph and then save it to your database. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE sta’s only really interesting to Rails developers. The convention in Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to an ActiveRecord object graph and then save it to your database. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE sta’s only really interesting to Rails developers. The convention in Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to an ActiveRecord object graph and then save it to your database. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE sta’s only really interesting to Rails developers. The convention in Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to an ActiveRecord object graph and then save it to your database. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE sta’s only really interesting to Rails developers. The convention in Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to an ActiveRecord object graph and then save it to your database. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE sta’s only really interesting to Rails developers. The convention in Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to an ActiveRecord object graph and then save it to your database. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE sta’s only really interesting to Rails developers. The convention in Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to an ActiveRecord object graph and then save it to your database. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE sta’s only really interesting to Rails developers. The convention in Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to an ActiveRecord object graph and then save it to your database. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE sta’s only really interesting to Rails developers. The convention in Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to an ActiveRecord object graph and then save it to your database. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE staonlyreallyinteresting to Rails developers. The convention in Rails is that, when you pass into an action a JSON object graph, the framework can automatically convert it to an ActiveRecord object graph and then save it to your database. It knows which of the objects are already in your database, and issues the correct INSERT or UPDATE sta’s only really ";

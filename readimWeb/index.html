@@ -60,7 +60,7 @@
                         prevLine: $index() == $parent.settings.preview.wordLineNumber() - 1,
                         curLine: $index() == $parent.settings.preview.wordLineNumber(),
                         nextLine: $index() == $parent.settings.preview.wordLineNumber() + 1
-                    }">
+                    }, click: function () { $parent.lineClick($index()) }">
                 </div>
             </span>
 
