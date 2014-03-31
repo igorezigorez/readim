@@ -87,8 +87,9 @@
             for (var i = 0; i < this.settings.preview.linesCount; i++) {
                 this.visibleLines.push({
                     line: ko.observable(this.textArray[i].join(" ")),
-                    words: this.textArray[i]
-                });
+                    words: this.textArray[i],
+                    index: ko.observable(i)
+            });
             }
 
             this.currentWord.lineNumber = this.settings.preview.wordLineNumber();
@@ -106,7 +107,7 @@
 
         applyWord: function (word, setCoordinatesFunc, previousWordValue) {
             this.restoreWordFromObject(word);
-            this.previousWord(previousWordValue ? word.value() : previousWordValue);
+            this.previousWord(previousWordValue ? previousWordValue : word.value());
 
             setCoordinatesFunc.call(this);
             this.backupWordInObject(word);
@@ -136,17 +137,18 @@
         },
 
         moveNextLine: function () {
-
+            
             this.currentTextLine += 1;
             this.visibleLines.shift();
             this.visibleLines.push({
                 line: ko.observable(this.textArray[this.currentTextLine].join(" ")),
-                words: this.textArray[this.currentTextLine]
+                words: this.textArray[this.currentTextLine],
+                index: ko.observable(this.currentTextLine)
             });
         },
 
         getNextWordCoordinates: function () {
-            wordObject = this.currentWord;
+            var wordObject = this.currentWord;
             if (this.visibleLines()[wordObject.lineNumber].words.length <= wordObject.position + 1) {
                 wordObject.position = -1;
                 this.moveNextLine();
@@ -155,18 +157,19 @@
         },
 
         scrollLines: function (numberOfLines) {
-            return function () {
+            return function() {
                 this.currentWord.position = -1;
                 this.currentTextLine += numberOfLines;
-                this.visibleLines = ko.observableArray([]);
-                var firstPreviewLineIndex = this.currentTextLine - this.settings.preview.wordLineNumber();
+                var firstPreviewLineIndex = this.currentTextLine - this.settings.preview.linesCount;
                 for (var i = firstPreviewLineIndex; i < firstPreviewLineIndex + this.settings.preview.linesCount; i++) {
+                    this.visibleLines.shift();
                     this.visibleLines.push({
                         line: ko.observable(this.textArray[i].join(" ")),
-                        words: this.textArray[i]
+                        words: this.textArray[i],
+                        index: ko.observable(i)
                     });
                 }
-            }
+            };
         },
 
         decorateWord: function (wordObject) {
