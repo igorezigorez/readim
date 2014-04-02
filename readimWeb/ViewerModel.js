@@ -13,6 +13,7 @@
                 prepositionMaxLength: 2,
                 wordAfterPrepositionMaxLength: 10,
                 previewLineLength: 70,
+                wordLineNumber: 6
             },
             preview: {
                 linesCount: 20,
@@ -20,6 +21,7 @@
             },
             timer: {
                 interval: 150,
+                intervalChangeStep: 1.1,
                 spaceCorrection: 1.18,
                 wordLengthCorrection: 0.01,
                 bigWordLengthCorrection: 1.7,
@@ -32,7 +34,7 @@
 
         textArray: [],
         visibleLines: ko.observableArray([]),
-        currentTextLine: 0,
+        currentTextLine: ko.observable(0),
 
         currentWord: {
             lineNumber: 0,
@@ -61,6 +63,12 @@
             }
         },
 
+        getLineNumber: function (previewLineIndex) {
+            var index = this.currentTextLine() - this.settings.preview.linesCount - this.settings.preview.wordLineNumber() + previewLineIndex + 1;
+            if (index <= 0 || index > this.textArray.length - this.settings.preview.linesCount) return "";
+            return index;
+        },
+
         startStop: function () {
             this.started = !this.started;
             if (this.started) {
@@ -71,18 +79,26 @@
 
         lineClick: function (index) {
             this.startCorrection = this.settings.timer.startCorrection;
-            var word = this.applyWord(this.currentWord, this.scrollLines(index - this.settings.preview.wordLineNumber()));
+            this.applyWord(this.currentWord, this.scrollLines(index - this.settings.preview.wordLineNumber()));
+        },
+
+        increaseIntervalClick: function() {
+            this.settings.timer.interval *= this.settings.timer.intervalChangeStep;
+        },
+
+        decreaseIntervalClick: function () {
+            this.settings.timer.interval /= this.settings.timer.intervalChangeStep;
         },
 
         loadText: function (content) {
-            this.textArray = splitTextToWords(content, this.settings.parser);
+            this.textArray = splitTextToWords(content, this.settings);
         },
 
         startReading: function () {
             this.loadText(getFileContent());
 
             this.settings.preview.wordLineNumber(6);
-            this.currentTextLine = this.settings.preview.linesCount;
+            this.currentTextLine(this.settings.preview.linesCount);
 
             for (var i = 0; i < this.settings.preview.linesCount; i++) {
                 this.visibleLines.push({
@@ -93,32 +109,32 @@
             }
 
             this.currentWord.lineNumber = this.settings.preview.wordLineNumber();
-            this.currentWord.position = 1;
-            //this.currentWord.value(this.textArray[this.settings.preview.wordLineNumber()][1]);
+            this.currentWord.position = 0;
 
-            this.backupWordInObject(this.currentWord);
-            this.decorateWord(this.currentWord);
+            this._backupWordInObject(this.currentWord);
+            this._decorateWord(this.currentWord);
         },
 
         moveNext: function () {
-            var word = this.applyWord(this.currentWord, this.getNextWordCoordinates);
+            var word = this.applyWord(this.currentWord, this._getNextWordCoordinates);
             return this.getIntervalCorrection(word.value());
         },
 
         applyWord: function (word, setCoordinatesFunc, previousWordValue) {
-            this.restoreWordFromObject(word);
+            this._restoreWordFromObject(word);
             this.previousWord(previousWordValue ? previousWordValue : word.value());
 
             setCoordinatesFunc.call(this);
-            this.backupWordInObject(word);
-            this.decorateWord(word);
+            this._backupWordInObject(word);
+            this._decorateWord(word);
 
+            var visibleLines = this.visibleLines();
             var nextWordPosition = word.position + 1;
             var currentLineNumber = word.lineNumber;
 
-            this.nextWord(this.visibleLines()[currentLineNumber].words.length > nextWordPosition
-                            ? this.visibleLines()[currentLineNumber].words[nextWordPosition]
-                            : this.visibleLines()[currentLineNumber + 1].words[0]);
+            this.nextWord(visibleLines[currentLineNumber].words.length > nextWordPosition
+                            ? visibleLines[currentLineNumber].words[nextWordPosition]
+                            : visibleLines[currentLineNumber + 1].words[0]);
             return word;
         },
 
@@ -138,16 +154,46 @@
 
         moveNextLine: function () {
             
-            this.currentTextLine += 1;
-            this.visibleLines.shift();
-            this.visibleLines.push({
-                line: ko.observable(this.textArray[this.currentTextLine].join(" ")),
-                words: this.textArray[this.currentTextLine],
-                index: ko.observable(this.currentTextLine)
-            });
+            this.currentTextLine(this.currentTextLine() + 1);
+            this._addTextToBottomOfVisibleLines(this.currentTextLine());
         },
 
-        getNextWordCoordinates: function () {
+        scrollLines: function (numberOfLines) {
+            return function() {
+                this.currentWord.position = -1;
+                var currentTextLineNewValue = this.currentTextLine() + numberOfLines,
+                    previewlinesCount = this.settings.preview.linesCount;
+
+                //check boundaries of text array
+                if (currentTextLineNewValue - previewlinesCount < 0) {
+                    currentTextLineNewValue = previewlinesCount;
+                } else if (currentTextLineNewValue > this.textArray.length) {
+                    currentTextLineNewValue = this.textArray.length;
+                }
+
+                this.currentTextLine(currentTextLineNewValue);
+
+                for (var i = this.currentTextLine() - previewlinesCount; i < this.currentTextLine() ; i++) {
+                    this._addTextToBottomOfVisibleLines(i);
+                }
+            };
+        },
+
+        _addTextToBottomOfVisibleLines: function (textArrayIndex) {
+            if (this.visibleLines().length >= this.settings.preview.linesCount) {
+                this.visibleLines.shift();
+            }
+            //check for end of lines in text array
+            if (this.textArray.length > textArrayIndex) {
+                this.visibleLines.push({
+                    line: ko.observable(this.textArray[textArrayIndex].join(" ")),
+                    words: this.textArray[textArrayIndex],
+                    index: ko.observable(textArrayIndex)
+                });
+            }
+        },
+
+        _getNextWordCoordinates: function () {
             var wordObject = this.currentWord;
             if (this.visibleLines()[wordObject.lineNumber].words.length <= wordObject.position + 1) {
                 wordObject.position = -1;
@@ -156,44 +202,27 @@
             wordObject.position += 1;
         },
 
-        scrollLines: function (numberOfLines) {
-            return function() {
-                this.currentWord.position = -1;
-                this.currentTextLine += numberOfLines;
-                var firstPreviewLineIndex = this.currentTextLine - this.settings.preview.linesCount;
-                for (var i = firstPreviewLineIndex; i < firstPreviewLineIndex + this.settings.preview.linesCount; i++) {
-                    this.visibleLines.shift();
-                    this.visibleLines.push({
-                        line: ko.observable(this.textArray[i].join(" ")),
-                        words: this.textArray[i],
-                        index: ko.observable(i)
-                    });
-                }
-            };
-        },
-
-        decorateWord: function (wordObject) {
+        _decorateWord: function (wordObject) {
             var result = this.visibleLines()[wordObject.lineNumber];
             result.words[wordObject.position] = "<span>" + result.words[wordObject.position] + "</span>";
             result.line(result.words.join(" "));
         },
-        backupWordInObject: function (wordObject) {
+        _backupWordInObject: function (wordObject) {
             wordObject.value(this.visibleLines()[wordObject.lineNumber].words[wordObject.position]);
-            this.splitWord(wordObject);
+            this._splitWord(wordObject);
         },
-        splitWord: function (wordObject) {
+        _splitWord: function (wordObject) {
             var word = wordObject.value();
             var index = (word.indexOf(" ") > 0) ? Math.floor((word.length - word.indexOf(" ")) / 3) + word.indexOf(" ") : Math.floor(word.length / 3);
             wordObject.leftPart(word.substr(0, index).replace(" ", "&nbsp;"));
             wordObject.middleLetter(word[index]);
             wordObject.rightPart(word.substr(index + 1));
         },
-        restoreWordFromObject: function (wordObject) {
+        _restoreWordFromObject: function (wordObject) {
             var result = this.visibleLines()[wordObject.lineNumber];
             result.words[wordObject.position] = wordObject.value();
             result.line(result.words.join(" "));
         },
-
     };
 
     function splitTextToWords(text, settings) {
@@ -204,20 +233,25 @@
             previousWord = "longword",
             currentWord;
 
+        //fill array with empty first strings to show them above current string while reading
+        for (var i = 0; i < settings.preview.wordLineNumber(); i++) {
+            wordsArray.push([]);
+        }
+
         for (var i = 0; i < linesArray.length; i++) {
             var lineWords = linesArray[i].split(" ");
             wordsArrayCurrentLineLength = 0;
             wordsArrayCurrentLine = [];
             for (var j = 0; j < lineWords.length; j++) {
                 if (lineWords[j].length > 0) {
-                    if (wordsArrayCurrentLineLength + lineWords[j].length >= settings.previewLineLength) {
+                    if (wordsArrayCurrentLineLength + lineWords[j].length >= settings.parser.previewLineLength) {
                         wordsArray.push(wordsArrayCurrentLine);
                         wordsArrayCurrentLineLength = 0;
                         wordsArrayCurrentLine = [];
                     }
 
                     currentWord = lineWords[j];
-                    if (previousWord.length <= settings.prepositionMaxLength && currentWord.length <= settings.wordAfterPrepositionMaxLength && !containsPunctuation(previousWord)) {
+                    if (previousWord.length <= settings.parser.prepositionMaxLength && currentWord.length <= settings.parser.wordAfterPrepositionMaxLength && !containsPunctuation(previousWord)) {
                         wordsArrayCurrentLine[wordsArrayCurrentLine.length - 1] += " " + currentWord;
                     }
                     else {
@@ -229,6 +263,12 @@
             }
             wordsArray.push(wordsArrayCurrentLine);
         }
+
+        //fill array with empty last strings to show them below current string at the end
+        for (var i = 0; i < settings.preview.linesCount - settings.preview.wordLineNumber() ; i++) {
+            wordsArray.push([]);
+        }
+
         return wordsArray;
     }
 

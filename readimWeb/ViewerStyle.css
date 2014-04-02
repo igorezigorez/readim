@@ -47,7 +47,7 @@ span.left, span.right{
 	font:12px arial;
 }
 
-.overview span span{
+.overview span span span{
 	color: #ff7777;
 }
 
@@ -102,4 +102,14 @@ span.left, span.right{
 .right_part
 {
 	width:51%;
+}
+
+.stringNumber
+{
+	text-align:right;
+	display: inline-block;
+	width:30px;
+	overflow: hidden;
+	left:-100px;
+	color: #444444;
 }

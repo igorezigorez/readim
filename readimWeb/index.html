@@ -11,9 +11,8 @@
         <div class="word">
 
             <span class="left">
-                <span class="prev" data-bind="text:previousWord"></span>
+                <span class="prev" data-bind="text: previousWord, click: increaseIntervalClick"></span>
                 <span class="cur" data-bind="click: startStop">
-
                     <div class="word_frame">
                         <div class="cursor"></div>
 
@@ -26,19 +25,17 @@
                         <div class="cursor"></div>
                     </div>
                 </span>
-                <span class="next" data-bind="text:nextWord"></span>
+                <span class="next" data-bind="text:nextWord, click: decreaseIntervalClick"></span>
             </span>
 
             <span class="right">
-                <span class="prev" data-bind="text:previousWord"></span>
+                <span class="prev" data-bind="text: previousWord, click: increaseIntervalClick"></span>
 
                 <span class="cur" data-bind="click: startStop">
-
                     <div class="word_frame">
                         <div class="cursor"></div>
 
                         <div class="word_container">
-
                             <span class="left_part"><span data-bind="html: currentWord.leftPart"></span>
                             </span><span class="right_part"><span class="middle_letter" data-bind="text: currentWord.middleLetter">A</span><span data-bind="text: currentWord.rightPart"></span>
                             </span>
@@ -48,28 +45,31 @@
                     </div>
                 </span>
                 
-                <span class="next" data-bind="text:nextWord"></span>
+                <span class="next" data-bind="text: nextWord, click: decreaseIntervalClick"></span>
             </span>
 
         </div>
 
         <div class="overview">
-
             <span class="left" data-bind="foreach: {data: visibleLines}">
-                <div data-bind="html: line, css: {
+                <div data-bind="css: {
                         prevLine: $index() == $parent.settings.preview.wordLineNumber() - 1,
                         curLine: $index() == $parent.settings.preview.wordLineNumber(),
                         nextLine: $index() == $parent.settings.preview.wordLineNumber() + 1
-                    }, click: function () { $parent.lineClick($index()) }">
+                        }, click: function () { $parent.lineClick($index()) }">
+                    <span class="stringNumber" data-bind="text: $parent.getLineNumber($index())"></span>
+                    <span data-bind="html: line"></span>
                 </div>
             </span>
 
             <span class="right" data-bind="foreach: {data: visibleLines}">
-                <div data-bind="html: line, css: {
+                <div data-bind="css: {
                         prevLine: $index() == $parent.settings.preview.wordLineNumber() - 1,
                         curLine: $index() == $parent.settings.preview.wordLineNumber(),
                         nextLine: $index() == $parent.settings.preview.wordLineNumber() + 1
-                    }">
+                        }, click: function () { $parent.lineClick($index()) }">
+                    <span class="stringNumber" data-bind="text: $parent.getLineNumber($index())"></span>
+                    <span data-bind="html: line"></span>
                 </div>
             </span>
 
