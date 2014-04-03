@@ -12,7 +12,7 @@
             parser: {
                 prepositionMaxLength: 2,
                 wordAfterPrepositionMaxLength: 10,
-                previewLineLength: 70,
+                previewLineLength: 55,
                 wordLineNumber: 6
             },
             preview: {

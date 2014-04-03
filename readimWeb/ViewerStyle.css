@@ -1,52 +1,33 @@
-﻿
-body  {
+﻿body  {
 	background-color:#111111;
 	color: #bbbbbb;
 }
+
 .word{
-	width:100%;
+    width:100%;
+	font:20px arial;
+	margin: 20px 0px;
 }
-
-.word .prev, .word .next {
-	color: #444444;
-}
-
-.word .cur{
-	/*text-align:center;*/
-	width:50%;
-}
-
+.word span { white-space: nowrap; }
+.word>span>span{ display:inline-block; }
+.word .cur{ width:50%; }
 .word .prev{
 	text-align:right;
 	width:25%;
 }
-.word .next{
-	text-align:left;
-	
-}
+.word .next{ text-align:left; }
+.word .prev, .word .next { color: #444444; }
 
-.word>span>span{
-	
+span.left, span.right{
+	width:49%;
 	display:inline-block; 
 }
 
 .overview{
 	width:100%;
 	color: #666677;
+    font:10px arial;
 }
-span.left, span.right{
-	width:49%;
-	display:inline-block; 
-}
-
-.word{
-	font:20px arial;
-	margin: 20px 0px;
-}
-.overview{
-	font:12px arial;
-}
-
 .overview span span span{
 	color: #ff7777;
 }
